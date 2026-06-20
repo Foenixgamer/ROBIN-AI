@@ -1,88 +1,88 @@
-# Robin — AI Desktop Operating System
+# Robin — Sistema Operativo Desktop con IA
 
-**Robin** is an AI-native desktop environment that transforms how you interact with your computer. Fully voice‑operated, privacy‑first, and built for intelligent system management and security.
+**Robin** es un entorno de escritorio nativo con inteligencia artificial que transforma la forma en que interactúas con tu computadora. Completamente operado por voz, centrado en la privacidad, y construido para la gestión inteligente del sistema y la seguridad.
 
-Instead of clicking menus or typing commands, you talk to Robin like a teammate. She monitors your system, protects your network, manages your credentials, automates tasks, and adapts to your context — all through natural conversation.
-
----
-
-## Core Philosophy
-
-- **Voice‑first, zero click** — No menus, no buttons. Every interaction is a conversation.
-- **Security as a reflex** — Real‑time network analysis, process monitoring, threat intelligence, and encrypted vault, always running.
-- **Context‑aware** — Profiles adapt your environment (work, home, night, travel). Automation triggers actions based on time and behavior.
-- **Privacy by design** — All processing stays local. API keys are encrypted at rest. The vault uses AES‑256‑GCM with hardware‑backed key storage.
+En lugar de hacer clic en menús o escribir comandos, le hablas a Robin como a un compañero de equipo. Ella monitorea tu sistema, protege tu red, gestiona tus credenciales, automatiza tareas y se adapta a tu contexto — todo mediante conversación natural.
 
 ---
 
-## Features
+## Filosofía Central
 
-### Voice Control
-- Always‑listening interface with frequency‑domain VAD (voice activity detection)
-- Groq Whisper STT → Natural language understanding → TTS response
-- Orb visualization with emotional states and mood‑driven prosody
-
-### System Management
-- Launch apps, adjust volume, lock screen, shutdown
-- Real‑time system stats (CPU, RAM, network, uptime)
-- Multi‑monitor fullscreen with frameless window
-
-### Network Security
-- Baseline learning + anomaly detection on traffic patterns
-- Real‑time alerts for RX/TX spikes with process correlation
-- Integration with URLhaus threat intelligence feed
-
-### Process Monitoring
-- Scans for 10+ suspicious process patterns (mimikatz, metasploit, cobalt strike, etc.)
-- Process‑level CPU/RAM abuse detection
-- Kill malicious processes by voice command
-
-### Encrypted Vault
-- AES‑256‑GCM with random IV + auth tag (industry standard)
-- Master key stored in Windows Credential Store (keytar) with file fallback
-- Dual‑API: simple secrets for API keys, full credential management for passwords
-- Secure password generator with configurable character sets
-- Encrypted backup/restore with auto‑backup weekly
-
-### Context Profiles
-- **Trabajo**: 40% volume, important notifications only, blocks games, 15min auto‑lock, VPN recommended
-- **Casa**: 70% volume, all notifications, relaxed security
-- **Noche**: 20% volume, silent mode, blocks distracting apps, aggressive auto‑lock
-- **Viaje**: 50% volume, maximum monitoring, 5min auto‑lock, aggressive threat alerts
-
-### Automations
-- Time‑based triggers ("at 23:00 activate night profile")
-- Interval triggers ("every 60 minutes remind me to rest")
-- Action types: profile activation, text‑to‑speech, screen lock
-
-### Alarms & Reminders
-- Natural language parsing: *"recuérdame comprar leche a las 3 pm"*
-- Windows toast notifications
-- Daily repeat option
+- **Voz primero, cero clics** — Sin menús, sin botones. Cada interacción es una conversación.
+- **Seguridad como reflejo** — Análisis de red en tiempo real, monitoreo de procesos, inteligencia de amenazas y bóveda cifrada, siempre activos.
+- **Consciente del contexto** — Perfiles que adaptan tu entorno (trabajo, casa, noche, viaje). Automatizaciones que se activan según hora y comportamiento.
+- **Privacidad desde el diseño** — Todo el procesamiento permanece local. Las claves API se cifran en reposo. La bóveda usa AES‑256‑GCM con almacenamiento de clave respaldado por hardware.
 
 ---
 
-## Architecture
+## Características
+
+### Control por Voz
+- Interfaz de escucha permanente con VAD (detección de actividad de voz) por dominio de frecuencia
+- Groq Whisper STT → Comprensión de lenguaje natural → Respuesta TTS
+- Visualización del orbe con estados emocionales y prosodia impulsada por el estado de ánimo
+
+### Gestión del Sistema
+- Abrir apps, ajustar volumen, bloquear pantalla, apagar
+- Estadísticas del sistema en tiempo real (CPU, RAM, red, uptime)
+- Pantalla completa en múltiples monitores con ventana sin bordes
+
+### Seguridad de Red
+- Aprendizaje de línea base + detección de anomalías en patrones de tráfico
+- Alertas en tiempo real por picos de RX/TX con correlación de procesos
+- Integración con el feed de inteligencia de amenazas URLhaus
+
+### Monitoreo de Procesos
+- Escaneo de 10+ patrones de procesos sospechosos (mimikatz, metasploit, cobalt strike, etc.)
+- Detección de abuso de CPU/RAM por proceso
+- Eliminación de procesos maliciosos mediante comando de voz
+
+### Bóveda Cifrada
+- AES‑256‑GCM con IV aleatorio + auth tag (estándar industrial)
+- Clave maestra almacenada en Windows Credential Store (keytar) con respaldo en archivo
+- API dual: secrets simples para claves API, gestión completa de credenciales para contraseñas
+- Generador de contraseñas seguras con conjuntos de caracteres configurables
+- Respaldos cifrados con exportación/importación y auto-backup semanal
+
+### Perfiles de Contexto
+- **Trabajo**: volumen al 40%, notificaciones solo importantes, bloquea juegos, auto-bloqueo 15min, VPN recomendada
+- **Casa**: volumen al 70%, todas las notificaciones, seguridad relajada
+- **Noche**: volumen al 20%, modo silencioso, bloquea apps distractoras, auto-bloqueo agresivo
+- **Viaje**: volumen al 50%, monitoreo máximo, auto-bloqueo 5min, alertas de amenazas agresivas
+
+### Automatizaciones
+- Disparadores por hora ("a las 23:00 activar perfil noche")
+- Disparadores por intervalo ("cada 60 minutos recordar descansar")
+- Tipos de acción: activar perfil, texto a voz, bloquear pantalla
+
+### Alarmas y Recordatorios
+- Análisis de lenguaje natural: *"recuérdame comprar leche a las 3 pm"*
+- Notificaciones toast de Windows
+- Opción de repetición diaria
+
+---
+
+## Arquitectura
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    main.js                           │
 │  ┌──────────┐ ┌──────────┐ ┌─────────────────────┐  │
 │  │  Voice   │ │  Speech  │ │    ActionEngine      │  │
-│  │  Engine  │ │  Engine  │ │  (intent routing)    │  │
+│  │  Engine  │ │  Engine  │ │  (ruteo de intentos) │  │
 │  └────┬─────┘ └────┬─────┘ └──┬──────┬──────┬─────┘  │
 │       │            │          │      │      │        │
 │  ┌────▼────────────▼──────────▼──────▼──────▼─────┐  │
-│  │              RobinBrain (AI core)              │  │
+│  │             RobinBrain (núcleo IA)             │  │
 │  │  Claude / OpenRouter / Groq / Gemini cascade   │  │
 │  └───────────────────────┬────────────────────────┘  │
 │                          │                           │
 │  ┌───────────────────────▼────────────────────────┐  │
-│  │          MemoryEngine (SQLite persistence)     │  │
+│  │       MemoryEngine (persistencia SQLite)       │  │
 │  └───────────────────────┬────────────────────────┘  │
 │                          │                           │
 │  ┌──────────┐ ┌──────────▼────────┐ ┌────────────┐  │
-│  │  Vault   │ │  Security Modules │ │  Profiles  │  │
+│  │  Vault   │ │  Módulos Seguridad│ │  Profiles  │  │
 │  │ Manager  │ │ ┌──────────────┐  │ │  Manager   │  │
 │  │  (AES)   │ │ │NetworkMonitor│  │ └────────────┘  │
 │  └──────────┘ │ │ProcessMonitor│  │ ┌────────────┐  │
@@ -97,116 +97,116 @@ Instead of clicking menus or typing commands, you talk to Robin like a teammate.
 └─────────────────────────────────────────────────────┘
 ```
 
-### Voice Pipeline
+### Pipeline de Voz
 ```
-Microphone → MediaRecorder → Audio → Groq Whisper → ActionEngine
+Micrófono → MediaRecorder → Audio → Groq Whisper → ActionEngine
                                                           │
                                              ┌────────────┴────────────┐
                                              ▼                        ▼
-                                     Pre‑brain detection      brain.think()
-                                     (direct commands,         (AI response)
-                                      flexible intents)
+                                     Detección pre-brain      brain.think()
+                                     (comandos directos,       (respuesta IA)
+                                      detección flexible)
                                              │                        │
                                              └────────────┬────────────┘
                                                           ▼
-                                                  Post‑brain override
+                                                  Post-brain override
                                                   (_detectCommand)
                                                           │
                                                           ▼
-                                                  Execute action / Speak
+                                                  Ejecutar acción / Hablar
 ```
 
 ---
 
-## Quick Start
+## Inicio Rápido
 
 ```bash
-# Install dependencies
+# Instalar dependencias
 npm install
 
-# Set your API key (Groq for STT)
-set ROBIN_GROQ_KEY=gsk_your_key_here
+# Configurar clave API (Groq para STT)
+set ROBIN_GROQ_KEY=gsk_tu_key_aqui
 
-# Launch Robin
+# Iniciar Robin
 npm start
 ```
 
-### Environment Variables
-| Variable | Purpose |
+### Variables de Entorno
+| Variable | Propósito |
 |---|---|
-| `ROBIN_GROQ_KEY` | Speech‑to‑text (Groq Whisper) |
-| `ROBIN_OPENROUTER_KEY` | LLM via OpenRouter |
+| `ROBIN_GROQ_KEY` | Voz a texto (Groq Whisper) |
+| `ROBIN_OPENROUTER_KEY` | LLM vía OpenRouter |
 | `ROBIN_ANTHROPIC_KEY` | Claude Sonnet |
 | `ROBIN_GOOGLE_KEY` | Gemini + Safe Browsing |
 
-Keys are automatically provisioned to the encrypted vault on first run.
+Las claves se provisioning automáticamente a la bóveda cifrada en el primer inicio.
 
 ---
 
-## Voice Command Reference
+## Referencia de Comandos de Voz
 
-### System
-| Command | Action |
+### Sistema
+| Comando | Acción |
 |---|---|
-| "Qué hora es" | Current time |
-| "Clima en Santo Domingo" | Weather |
-| "Bloquea la pantalla" | Lock workstation |
-| "Abre Chrome" | Launch application |
-| "Sube el volumen" / "Baja el volumen" | Volume control |
-| "Volumen al 50" | Set exact volume |
-| "Estado del sistema" | System report |
+| "Qué hora es" | Hora actual |
+| "Clima en Santo Domingo" | Clima |
+| "Bloquea la pantalla" | Bloquear equipo |
+| "Abre Chrome" | Abrir aplicación |
+| "Sube el volumen" / "Baja el volumen" | Control de volumen |
+| "Volumen al 50" | Volumen exacto |
+| "Estado del sistema" | Reporte del sistema |
 
-### Security
-| Command | Action |
+### Seguridad
+| Comando | Acción |
 |---|---|
-| "Escanea procesos" | Scan for suspicious processes |
-| "Analiza mi sistema" | Full system analysis |
-| "Mi IP pública" | Show public IP |
-| "Verifica dominio example.com" | Check domain against blacklist |
-| "Actualiza lista negra" | Sync URLhaus threat feed |
-| "Resumen de red" | Daily traffic summary |
+| "Escanea procesos" | Buscar procesos sospechosos |
+| "Analiza mi sistema" | Análisis completo del sistema |
+| "Mi IP pública" | Mostrar IP pública |
+| "Verifica dominio example.com" | Revisar dominio contra lista negra |
+| "Actualiza lista negra" | Sincronizar feed URLhaus |
+| "Resumen de red" | Resumen diario de tráfico |
 
-### Vault
-| Command | Action |
+### Bóveda
+| Comando | Acción |
 |---|---|
-| "Guarda contraseña de Gmail" | Start credential save flow |
-| "Busca contraseña de Netflix" | Retrieve credential (copies to clipboard, auto‑clears in 30s) |
-| "Lista mis cuentas" | Show all stored services |
-| "Genera una contraseña segura" | Generate random password |
-| "Elimina contraseña de Spotify" | Remove credential |
-| "Backup del vault" | Export encrypted backup |
+| "Guarda contraseña de Gmail" | Iniciar guardado de credencial |
+| "Busca contraseña de Netflix" | Recuperar credencial (copia al portapapeles, auto-limpieza en 30s) |
+| "Lista mis cuentas" | Mostrar todos los servicios guardados |
+| "Genera una contraseña segura" | Generar contraseña aleatoria |
+| "Elimina contraseña de Spotify" | Borrar credencial |
+| "Backup del vault" | Exportar respaldo cifrado |
 
-### Profiles
-| Command | Action |
+### Perfiles
+| Comando | Acción |
 |---|---|
-| "Modo trabajo" | Work profile (focused, minimal distractions) |
-| "Modo casa" | Home profile (relaxed) |
-| "Modo noche" | Night profile (silent, blocked apps) |
-| "Modo viaje" | Travel profile (maximum security) |
-| "Qué perfil está activo" | Show current profile |
+| "Modo trabajo" | Perfil trabajo (enfocado, mínimas distracciones) |
+| "Modo casa" | Perfil casa (relajado) |
+| "Modo noche" | Perfil noche (silencioso, apps bloqueadas) |
+| "Modo viaje" | Perfil viaje (seguridad máxima) |
+| "Qué perfil está activo" | Mostrar perfil actual |
 
-### Alarms & Automations
-| Command | Action |
+### Alarmas y Automatizaciones
+| Comando | Acción |
 |---|---|
-| "Recuérdame llamar a las 5 pm" | Create reminder |
-| "Crea alarma para las 7 am" | Create daily alarm |
-| "Lista automatizaciones" | Show active automations |
+| "Recuérdame llamar a las 5 pm" | Crear recordatorio |
+| "Crea alarma para las 7 am" | Crear alarma diaria |
+| "Lista automatizaciones" | Mostrar automatizaciones activas |
 
 ---
 
-## Tech Stack
+## Stack Tecnológico
 
 - **Runtime**: Node.js 24 + Electron 42
-- **Voice**: MediaRecorder + Groq Whisper (`whisper‑large‑v3‑turbo`)
-- **AI**: Anthropic Claude, Google Gemini, OpenRouter, Groq (cascade fallback)
+- **Voz**: MediaRecorder + Groq Whisper (`whisper‑large‑v3‑turbo`)
+- **IA**: Anthropic Claude, Google Gemini, OpenRouter, Groq (cascada con fallback)
 - **TTS**: Edge‑TTS (Python)
-- **Database**: SQLite (`better‑sqlite3`)
-- **Security**: AES‑256‑GCM, keytar (Windows Credential Store)
-- **Networking**: `systeminformation`, `node‑fetch`
-- **Visual**: Canvas 2D (orb), CSS backdrop‑blur (side panel)
+- **Base de datos**: SQLite (`better‑sqlite3`)
+- **Seguridad**: AES‑256‑GCM, keytar (Windows Credential Store)
+- **Red**: `systeminformation`, `node‑fetch`
+- **Visual**: Canvas 2D (orbe), CSS backdrop‑blur (panel lateral)
 
 ---
 
-## License
+## Licencia
 
 MIT
