@@ -1,0 +1,74 @@
+{
+  "name": "robin-desktop",
+  "version": "1.0.0",
+  "description": "Robin — Security Assistant. Asistente de seguridad con IA para Windows.",
+  "main": "main.js",
+  "author": "Dorian",
+  "license": "MIT",
+  "scripts": {
+    "start": "npm run generate-icons && electron .",
+    "build": "npm run generate-icons && electron-builder --win portable",
+    "build:installer": "npm run generate-icons && electron-builder --win nsis",
+    "dev": "electron . --dev",
+    "generate-icons": "node scripts/generate-icons.js",
+    "prebuild": "npm run generate-icons"
+  },
+  "build": {
+    "appId": "com.robin.desktop",
+    "productName": "Robin Security Assistant",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Robin"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "core/**/*",
+      "db/**/*",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "core/",
+        "to": "core/"
+      }
+    ]
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "@google/generative-ai": "^0.24.1",
+    "better-sqlite3": "^12.11.0",
+    "keytar": "^7.9.0",
+    "node-fetch": "^3.3.2",
+    "sharp": "^0.33.2",
+    "systeminformation": "^5.22.0"
+  },
+  "devDependencies": {
+    "electron": "^42.0.0",
+    "electron-builder": "^26.15.0"
+  }
+}

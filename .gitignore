@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.log
+.vault-key
+.vault-master
+vault-backups/
+.vault.enc
+*.corrupted.*

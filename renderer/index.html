@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Robin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#070A10;overflow:hidden;cursor:none;}
+
+/* ── Orbe Canvas (full viewport) ── */
+#orb{
+  position:fixed;top:0;left:0;
+  width:100vw;height:100vh;
+  z-index:1;
+}
+
+/* ── User text (above orb) ── */
+#user-text{
+  position:fixed;
+  top:calc(50% - 23vh);
+  left:50%;
+  transform:translateX(-50%);
+  color:rgba(255,255,255,0.3);
+  font:300 15px/1.5 'Inter','Segoe UI',sans-serif;
+  text-align:center;max-width:65%;
+  opacity:0;transition:opacity 0.4s ease;
+  pointer-events:none;z-index:10;
+}
+
+/* ── Robin text (below orb) ── */
+#robin-text{
+  position:fixed;
+  top:calc(50% + 23vh);
+  left:50%;
+  transform:translateX(-50%);
+  color:rgba(255,255,255,0.85);
+  font:300 17px/1.7 'Inter','Segoe UI',sans-serif;
+  text-align:center;max-width:70%;
+  opacity:0;transition:opacity 0.6s ease;
+  pointer-events:none;z-index:10;
+  text-shadow:0 0 40px rgba(0,212,255,0.1);
+}
+
+/* ── Status hint (bottom) ── */
+#status-hint{
+  position:fixed;bottom:6%;left:50%;
+  transform:translateX(-50%);
+  color:rgba(0,212,255,0.2);
+  font:400 11px/1 'Inter','Segoe UI',sans-serif;
+  letter-spacing:4px;text-transform:uppercase;
+  transition:opacity 1s ease;z-index:5;
+}
+
+/* ── Emergency Bar ── */
+#emergency-bar{
+  position:fixed;top:0;left:0;right:0;
+  height:0;opacity:0;overflow:hidden;
+  transition:height 300ms ease,opacity 300ms ease;
+  background:rgba(10,14,26,0.95);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,212,255,0.15);
+  z-index:100;cursor:default;
+}
+#emergency-bar.open{
+  height:48px;opacity:1;
+}
+#emergency-bar .bar-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  height:48px;padding:0 24px;
+  font:13px/1 'Inter','Segoe UI',sans-serif;
+}
+#emergency-bar .bar-left{display:flex;align-items:center;gap:16px;}
+#emergency-bar .bar-logo{
+  color:rgba(0,212,255,0.9);font-weight:600;letter-spacing:2px;font-size:13px;
+}
+#emergency-bar .badge{
+  display:flex;align-items:center;gap:6px;
+  color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:0.3px;
+  cursor:pointer;transition:color 0.2s;
+}
+#emergency-bar .badge:hover{color:rgba(0,212,255,0.8);}
+#emergency-bar .badge .dot{
+  width:6px;height:6px;border-radius:50%;display:inline-block;
+}
+#emergency-bar .badge .dot.green{background:#00E676;box-shadow:0 0 6px #00E676;}
+#emergency-bar .badge .dot.yellow{background:#FFD740;box-shadow:0 0 6px #FFD740;}
+#emergency-bar .badge .dot.red{background:#FF1744;box-shadow:0 0 6px #FF1744;}
+#emergency-bar .bar-close{
+  background:none;border:none;color:rgba(255,255,255,0.3);font-size:18px;
+  cursor:pointer;padding:4px 8px;transition:color 0.2s;
+  font-family:'Inter','Segoe UI',sans-serif;
+}
+#emergency-bar .bar-close:hover{color:rgba(255,255,255,0.7);}
+
+/* ── Emergency Panel ── */
+#emergency-panel{
+  position:fixed;top:48px;left:0;right:0;
+  bottom:0;z-index:99;
+  background:rgba(7,10,16,0.97);
+  backdrop-filter:blur(30px);
+  -webkit-backdrop-filter:blur(30px);
+  transform:translateY(-100%);opacity:0;
+  transition:transform 350ms ease,opacity 350ms ease;
+  overflow-y:auto;padding:32px 40px;
+  display:none;
+}
+#emergency-panel.open{
+  transform:translateY(0);opacity:1;
+}
+#emergency-panel .panel-title{
+  color:rgba(0,212,255,0.7);
+  font:500 11px/1 'Inter','Segoe UI',sans-serif;
+  letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:24px;
+}
+#emergency-panel .panel-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05);
+  font:14px/1.4 'Inter','Segoe UI',sans-serif;
+}
+#emergency-panel .panel-row .label{color:rgba(255,255,255,0.5);}
+#emergency-panel .panel-row .value{color:rgba(255,255,255,0.85);font-weight:400;}
+#emergency-panel .panel-row .value.cyan{color:rgba(0,212,255,0.9);}
+#emergency-panel .panel-row .value.green{color:#00E676;}
+#emergency-panel .panel-row .value.red{color:#FF1744;}
+#emergency-panel .panel-close{
+  margin-top:24px;text-align:center;
+}
+#emergency-panel .panel-close button{
+  background:none;border:1px solid rgba(0,212,255,0.3);
+  color:rgba(0,212,255,0.6);padding:10px 40px;
+  border-radius:6px;cursor:pointer;
+  font:13px/1 'Inter','Segoe UI',sans-serif;
+  transition:all 0.2s;
+}
+#emergency-panel .panel-close button:hover{
+  border-color:rgba(0,212,255,0.6);color:rgba(0,212,255,0.9);
+}
+
+/* ── Idle cursor: hide after 3s inactivity ── */
+@keyframes hideCursor{
+  0%,70%{cursor:none;}
+  100%{cursor:default;}
+}
+
+/* ── Side Panel ── */
+.side-panel {
+  position: fixed; top: 0; right: 0;
+  width: 300px; height: 100vh;
+  background: rgba(7, 10, 16, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(0, 212, 255, 0.2);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2000;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.side-panel.open { transform: translateX(0); }
+.sp-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1999;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sp-overlay.open { opacity: 1; pointer-events: all; }
+
+/* Header */
+.sp-header {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 20px 20px 8px;
+}
+.sp-logo { display: flex; align-items: center; gap: 8px; }
+.sp-diamond { color: #00D4FF; font-size: 14px; }
+.sp-title {
+  color: #00D4FF; font-size: 13px;
+  font-weight: 600; letter-spacing: 4px;
+}
+.sp-close {
+  background: none; border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); width: 28px; height: 28px;
+  border-radius: 4px; cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.sp-close:hover { border-color: rgba(0,212,255,0.4); color: #00D4FF; }
+.sp-version {
+  padding: 0 20px 16px; font-size: 11px;
+  color: rgba(255,255,255,0.3); letter-spacing: 1px;
+}
+.sp-online { color: #00FFB3; }
+
+/* Perfil */
+.sp-profile {
+  margin: 0 16px 16px; padding: 12px 16px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.sp-avatar {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #00D4FF, #0066AA);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; color: #000; flex-shrink: 0;
+}
+.sp-username { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9); }
+.sp-memories { font-size: 11px; color: rgba(0,212,255,0.7); margin-top: 2px; }
+
+/* Secciones */
+.sp-sections { flex: 1; overflow-y: auto; padding: 0 8px; }
+.sp-sections::-webkit-scrollbar { display: none; }
+.sp-section { margin-bottom: 8px; }
+.sp-section-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 3px;
+  color: rgba(255,255,255,0.25); padding: 8px 12px 4px;
+}
+
+/* Items */
+.sp-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 6px;
+  cursor: pointer; transition: all 0.15s ease; position: relative;
+}
+.sp-item:hover { background: rgba(0, 212, 255, 0.08); }
+.sp-item:hover .sp-item-label { color: rgba(255,255,255,1); }
+.sp-item:active { background: rgba(0, 212, 255, 0.15); }
+.sp-item-icon {
+  font-size: 13px; color: rgba(0, 212, 255, 0.7);
+  width: 18px; text-align: center; flex-shrink: 0;
+}
+.sp-item-label {
+  flex: 1; font-size: 13px;
+  color: rgba(255,255,255,0.75); transition: color 0.15s;
+}
+.sp-item-arrow { color: rgba(255,255,255,0.2); font-size: 16px; }
+.sp-item-badge { font-size: 10px; color: #00FFB3; }
+.sp-item-count {
+  font-size: 11px; color: rgba(0,212,255,0.7);
+  background: rgba(0,212,255,0.1); padding: 2px 7px; border-radius: 10px;
+}
+
+/* Toggle */
+.sp-toggle {
+  width: 32px; height: 18px; background: rgba(255,255,255,0.1);
+  border-radius: 9px; position: relative; transition: background 0.2s; flex-shrink: 0;
+}
+.sp-toggle.active { background: rgba(0, 212, 255, 0.5); }
+.sp-toggle-thumb {
+  position: absolute; left: 2px; top: 2px;
+  width: 14px; height: 14px; background: rgba(255,255,255,0.6);
+  border-radius: 50%; transition: all 0.2s;
+}
+.sp-toggle.active .sp-toggle-thumb { left: 16px; background: #00D4FF; }
+
+/* Footer */
+.sp-footer { border-top: 1px solid rgba(255,255,255,0.06); padding: 8px; margin-top: auto; }
+.sp-danger .sp-item-icon, .sp-danger .sp-item-label { color: rgba(255, 80, 80, 0.7); }
+.sp-danger:hover { background: rgba(255, 80, 80, 0.08) !important; }
+.sp-danger:hover .sp-item-icon, .sp-danger:hover .sp-item-label { color: rgba(255, 100, 100, 1); }
+
+/* Subpaneles */
+.sp-subpanel {
+  position: absolute; inset: 0;
+  background: rgba(7, 10, 16, 0.99);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  display: flex; flex-direction: column;
+}
+.sp-subpanel.open { transform: translateX(0); }
+.sp-subpanel-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 16px 16px; border-bottom: 1px solid rgba(0,212,255,0.1);
+}
+.sp-back {
+  background: none; border: none; color: rgba(0,212,255,0.7);
+  font-size: 18px; cursor: pointer; padding: 0; line-height: 1;
+}
+.sp-subpanel-title { font-size: 12px; font-weight: 600; letter-spacing: 3px; color: rgba(255,255,255,0.7); }
+.sp-subpanel-content { flex: 1; overflow-y: auto; padding: 16px; }
+.sp-subpanel-content::-webkit-scrollbar { display: none; }
+
+/* Data rows */
+.sp-data-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px;
+}
+.sp-data-label { color: rgba(255,255,255,0.4); }
+.sp-data-value { color: rgba(255,255,255,0.85); font-weight: 500; }
+.sp-data-value.cyan { color: #00D4FF; }
+.sp-data-value.green { color: #00FFB3; }
+.sp-data-value.red { color: #FF5050; }
+
+/* Inputs en subpaneles */
+.sp-input-group { margin: 16px 0; text-align: left; }
+.sp-input-group label {
+  color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; display: block; margin-bottom: 6px;
+}
+.sp-input-group input {
+  width: 100%; padding: 9px 12px; border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 4px; background: rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.9); font-size: 12px; outline: none;
+}
+.sp-input-group input:focus { border-color: rgba(0,212,255,0.5); }
+.sp-btn {
+  background: none; border: 1px solid rgba(0,212,255,0.3);
+  color: rgba(0,212,255,0.7); padding: 8px 24px; border-radius: 4px;
+  cursor: pointer; font-size: 12px; transition: all 0.2s; display: inline-block;
+}
+.sp-btn:hover { border-color: rgba(0,212,255,0.6); color: #00D4FF; }
+.sp-btn-success {
+  border-color: rgba(0,255,179,0.3); color: rgba(0,255,179,0.7);
+}
+.sp-btn-success:hover { border-color: rgba(0,255,179,0.6); color: #00FFB3; }
+.sp-hint {
+  font-size: 11px; color: rgba(255,255,255,0.25);
+  line-height: 1.6; margin-top: 16px;
+}
+</style>
+</head>
+<body>
+
+<!-- ORBE -->
+<canvas id="orb"></canvas>
+
+<!-- USER TEXT (floating, above orb) -->
+<div id="user-text"></div>
+
+<!-- ROBIN TEXT (floating, below orb) -->
+<div id="robin-text"></div>
+
+<!-- STATUS HINT -->
+<div id="status-hint">ESCUCHANDO</div>
+
+<!-- EMERGENCY BAR -->
+<div id="emergency-bar">
+  <div class="bar-inner">
+    <div class="bar-left">
+      <span class="bar-logo">◆ ROBIN</span>
+      <span class="badge" id="bar-vpn" onclick="togglePanel('vpn')"><span class="dot"></span>VPN</span>
+      <span class="badge" id="bar-net" onclick="togglePanel('net')"><span class="dot green"></span>Red</span>
+      <span class="badge" id="bar-score" onclick="togglePanel('score')">Score <span id="bar-score-val">—</span></span>
+    </div>
+    <button class="bar-close" onclick="hideEmergency()">✕</button>
+  </div>
+</div>
+
+<!-- EMERGENCY PANEL -->
+<div id="emergency-panel">
+  <div class="panel-title">◆ Resumen del sistema</div>
+  <div id="panel-content"></div>
+  <div class="panel-close"><button onclick="hideEmergency()">Cerrar</button></div>
+</div>
+
+<!-- SIDE PANEL -->
+<div id="side-panel" class="side-panel">
+  <div class="sp-header">
+    <div class="sp-logo">
+      <span class="sp-diamond">◆</span>
+      <span class="sp-title">ROBIN</span>
+    </div>
+    <button class="sp-close" onclick="closeSidePanel()">×</button>
+  </div>
+  <div class="sp-version">v1.0.0 · <span id="sp-status" class="sp-online">Online</span></div>
+
+  <div class="sp-profile">
+    <div class="sp-avatar">E</div>
+    <div class="sp-profile-info">
+      <div class="sp-username" id="sp-username">Erick</div>
+      <div class="sp-memories"><span id="sp-memory-count">—</span> recuerdos</div>
+    </div>
+  </div>
+
+  <div class="sp-sections">
+    <div class="sp-section">
+      <div class="sp-section-title">SISTEMA</div>
+      <div class="sp-item" onclick="openSystemPanel()">
+        <span class="sp-item-icon">⬡</span>
+        <span class="sp-item-label">Panel de sistema</span>
+        <span class="sp-item-arrow">›</span>
+      </div>
+      <div class="sp-item" onclick="openApiKeysPanel()">
+        <span class="sp-item-icon">⌘</span>
+        <span class="sp-item-label">Configurar API Keys</span>
+        <span class="sp-item-arrow">›</span>
+      </div>
+      <div class="sp-item" onclick="toggleAutoStart()">
+        <span class="sp-item-icon">⟳</span>
+        <span class="sp-item-label">Inicio automático</span>
+        <div class="sp-toggle" id="autostart-toggle"><div class="sp-toggle-thumb"></div></div>
+      </div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-title">SEGURIDAD</div>
+      <div class="sp-item" onclick="openNetworkPanel()">
+        <span class="sp-item-icon">◈</span>
+        <span class="sp-item-label">Monitor de red</span>
+        <span class="sp-item-badge" id="net-badge">●</span>
+      </div>
+      <div class="sp-item" onclick="openSubPanel('subpanel-vault')">
+        <span class="sp-item-icon">⬧</span>
+        <span class="sp-item-label">Vault de contraseñas</span>
+        <span class="sp-item-arrow">›</span>
+      </div>
+      <div class="sp-item" onclick="openSubPanel('subpanel-threats')">
+        <span class="sp-item-icon">◎</span>
+        <span class="sp-item-label">Análisis de amenazas</span>
+        <span class="sp-item-arrow">›</span>
+      </div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-title">ROBIN</div>
+      <div class="sp-item" onclick="openMemoryPanel()">
+        <span class="sp-item-icon">◇</span>
+        <span class="sp-item-label">Memoria</span>
+        <span class="sp-item-count" id="sp-mem-badge">—</span>
+      </div>
+      <div class="sp-item" onclick="openSubPanel('subpanel-profile')">
+        <span class="sp-item-icon">◉</span>
+        <span class="sp-item-label">Perfil del usuario</span>
+        <span class="sp-item-arrow">›</span>
+      </div>
+      <div class="sp-item" onclick="showEmergencyBar();closeSidePanel()">
+        <span class="sp-item-icon">⚠</span>
+        <span class="sp-item-label">Barra de emergencia</span>
+        <span class="sp-item-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sp-footer">
+    <div class="sp-item sp-danger" onclick="confirmQuit()">
+      <span class="sp-item-icon">⏻</span>
+      <span class="sp-item-label">Salir de Robin</span>
+    </div>
+  </div>
+</div>
+
+<div id="side-panel-overlay" class="sp-overlay" onclick="closeSidePanel()"></div>
+
+<!-- Subpaneles -->
+<div id="subpanel-system" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-system')">‹</button>
+    <span class="sp-subpanel-title">SISTEMA</span>
+  </div>
+  <div class="sp-subpanel-content" id="subpanel-system-content">
+    <div style="color:rgba(255,255,255,0.3);font-size:11px;">Cargando...</div>
+  </div>
+</div>
+
+<div id="subpanel-network" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-network')">‹</button>
+    <span class="sp-subpanel-title">MONITOR DE RED</span>
+  </div>
+  <div class="sp-subpanel-content" id="subpanel-network-content">
+    <div style="color:rgba(255,255,255,0.3);font-size:11px;">Cargando...</div>
+  </div>
+</div>
+
+<div id="subpanel-memory" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-memory')">‹</button>
+    <span class="sp-subpanel-title">MEMORIA</span>
+  </div>
+  <div class="sp-subpanel-content" id="subpanel-memory-content">
+    <div style="color:rgba(255,255,255,0.3);font-size:11px;">Cargando...</div>
+  </div>
+</div>
+
+<div id="subpanel-apikeys" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-apikeys')">‹</button>
+    <span class="sp-subpanel-title">API KEYS</span>
+  </div>
+  <div class="sp-subpanel-content">
+    <div class="sp-input-group">
+      <label>Anthropic (Claude)</label>
+      <input type="password" id="key-anthropic" placeholder="sk-ant-...">
+    </div>
+    <div class="sp-input-group">
+      <label>Google (Gemini)</label>
+      <input type="password" id="key-google" placeholder="AIza...">
+    </div>
+    <div class="sp-input-group">
+      <label>OpenRouter</label>
+      <input type="password" id="key-openrouter" placeholder="sk-or-v1-...">
+    </div>
+    <div class="sp-input-group">
+      <label>Groq</label>
+      <input type="password" id="key-groq" placeholder="gsk_...">
+    </div>
+    <button class="sp-btn sp-btn-success" onclick="saveApiKeysInline()">Guardar</button>
+    <div id="key-status-inline" style="color:rgba(0,212,255,0.6);font-size:11px;margin-top:8px;"></div>
+  </div>
+</div>
+
+<div id="subpanel-vault" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-vault')">‹</button>
+    <span class="sp-subpanel-title">VAULT</span>
+  </div>
+  <div class="sp-subpanel-content">
+    <div class="sp-data-row">
+      <span class="sp-data-label">Estado</span>
+      <span class="sp-data-value green">Cifrado activo</span>
+    </div>
+    <div class="sp-data-row">
+      <span class="sp-data-label">Motor</span>
+      <span class="sp-data-value">Windows Credential Store</span>
+    </div>
+    <div class="sp-hint">Di "Robin, guardar contraseña" para agregar credenciales al vault cifrado.</div>
+  </div>
+</div>
+
+<div id="subpanel-threats" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-threats')">‹</button>
+    <span class="sp-subpanel-title">AMENAZAS</span>
+  </div>
+  <div class="sp-subpanel-content">
+    <div class="sp-data-row">
+      <span class="sp-data-label">Score de seguridad</span>
+      <span class="sp-data-value green">100</span>
+    </div>
+    <div class="sp-data-row">
+      <span class="sp-data-label">Amenazas detectadas</span>
+      <span class="sp-data-value">0</span>
+    </div>
+    <div class="sp-hint">Di "Robin, analiza amenazas" para un análisis completo del sistema.</div>
+  </div>
+</div>
+
+<div id="subpanel-profile" class="sp-subpanel">
+  <div class="sp-subpanel-header">
+    <button class="sp-back" onclick="closeSubPanel('subpanel-profile')">‹</button>
+    <span class="sp-subpanel-title">PERFIL</span>
+  </div>
+  <div class="sp-subpanel-content">
+    <div class="sp-hint" style="margin-top:0;margin-bottom:12px;">Robin aprende de tus conversaciones y construye tu perfil automáticamente.</div>
+    <div class="sp-data-row">
+      <span class="sp-data-label">Nombre</span>
+      <span class="sp-data-value" id="profile-name">Erick</span>
+    </div>
+    <div class="sp-data-row">
+      <span class="sp-data-label">Intereses</span>
+      <span class="sp-data-value" id="profile-interests">Ciberseguridad, IA</span>
+    </div>
+  </div>
+</div>
+
+<script src="voice.js"></script>
+<script src="orb.js"></script>
+<script>
+// ── Side Panel ──
+function openSidePanel() {
+  const panel = document.getElementById('side-panel');
+  const overlay = document.getElementById('side-panel-overlay');
+  if (!panel) return;
+  panel.classList.add('open');
+  overlay.classList.add('open');
+  updateSidePanelData();
+}
+
+function closeSidePanel() {
+  const panel = document.getElementById('side-panel');
+  const overlay = document.getElementById('side-panel-overlay');
+  if (!panel) return;
+  panel.classList.remove('open');
+  overlay.classList.remove('open');
+  document.querySelectorAll('.sp-subpanel').forEach(p => p.classList.remove('open'));
+}
+
+async function updateSidePanelData() {
+  if (!window.Robin) return;
+  try {
+    const data = await Robin.getEmergencyData();
+    const count = data.memoryCount || 0;
+    const el1 = document.getElementById('sp-memory-count');
+    const el2 = document.getElementById('sp-mem-badge');
+    if (el1) el1.textContent = count;
+    if (el2) el2.textContent = count;
+  } catch(e) {}
+}
+
+// Override legacy toggleMenu from voice.js
+function toggleMenu() {
+  openSidePanel();
+}
+
+function closeSubPanel(id) {
+  document.getElementById(id)?.classList.remove('open');
+}
+function openSubPanel(id) {
+  document.getElementById(id)?.classList.add('open');
+}
+
+// ── Toggle Autostart ──
+async function toggleAutoStart() {
+  const toggle = document.getElementById('autostart-toggle');
+  if (!toggle) return;
+  try {
+    const result = await Robin.invoke('system:autostart-toggle', {});
+    toggle.classList.toggle('active', result.enabled);
+  } catch(e) {
+    toggle.classList.toggle('active');
+  }
+}
+
+// ── System Panel ──
+async function openSystemPanel() {
+  openSubPanel('subpanel-system');
+  try {
+    const stats = await Robin.getSystemStats();
+    const content = document.getElementById('subpanel-system-content');
+    if (!content) return;
+    const uptime = stats.uptime
+      ? Math.floor(stats.uptime/3600) + 'h ' + Math.floor((stats.uptime%3600)/60) + 'm'
+      : '—';
+    const ramUsed = stats.ram?.used ? (stats.ram.used/1024/1024/1024).toFixed(1) + ' GB' : '—';
+    content.innerHTML = `
+      <div class="sp-data-row"><span class="sp-data-label">CPU</span><span class="sp-data-value cyan">${stats.cpu?.load?.toFixed(1) || '—'}%</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">RAM</span><span class="sp-data-value cyan">${stats.ram?.percent || '—'}%</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">RAM usada</span><span class="sp-data-value">${ramUsed}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">Encendido</span><span class="sp-data-value">${uptime}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">Plataforma</span><span class="sp-data-value">Windows</span></div>
+    `;
+  } catch(e) {}
+}
+
+// ── Network Panel ──
+async function openNetworkPanel() {
+  openSubPanel('subpanel-network');
+  try {
+    const net = await Robin.getNetworkInfo();
+    const content = document.getElementById('subpanel-network-content');
+    if (!content) return;
+    content.innerHTML = `
+      <div class="sp-data-row"><span class="sp-data-label">Estado</span><span class="sp-data-value ${net.online?'green':'red'}">${net.online ? '● Conectado' : '● Sin conexión'}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">Interfaz</span><span class="sp-data-value">${net.type || '—'}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">WiFi SSID</span><span class="sp-data-value">${net.wifiSsid || '—'}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">RX</span><span class="sp-data-value cyan">${net.rxSec ? (net.rxSec/1024).toFixed(1)+' KB/s' : '—'}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">TX</span><span class="sp-data-value cyan">${net.txSec ? (net.txSec/1024).toFixed(1)+' KB/s' : '—'}</span></div>
+    `;
+  } catch(e) {}
+}
+
+// ── Memory Panel ──
+async function openMemoryPanel() {
+  openSubPanel('subpanel-memory');
+  try {
+    const data = await Robin.getEmergencyData();
+    const content = document.getElementById('subpanel-memory-content');
+    if (!content) return;
+    content.innerHTML = `
+      <div class="sp-data-row"><span class="sp-data-label">Total recuerdos</span><span class="sp-data-value cyan">${data.memoryCount || 0}</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">Confianza</span><span class="sp-data-value green">${data.trustLevel || 0}%</span></div>
+      <div class="sp-data-row"><span class="sp-data-label">Estado IA</span><span class="sp-data-value green">Activa</span></div>
+    `;
+  } catch(e) {}
+}
+
+// ── API Keys ──
+function openApiKeysPanel() {
+  openSubPanel('subpanel-apikeys');
+}
+async function saveApiKeysInline() {
+  const providers = [
+    { id: 'key-anthropic', name: 'anthropic' },
+    { id: 'key-google', name: 'google' },
+    { id: 'key-openrouter', name: 'openrouter' },
+    { id: 'key-groq', name: 'groq' },
+  ];
+  let saved = 0;
+  for (const p of providers) {
+    const input = document.getElementById(p.id);
+    if (input && input.value.trim()) {
+      try {
+        await Robin.setApiKey(p.name, input.value.trim());
+        saved++;
+      } catch(e) {}
+    }
+  }
+  const status = document.getElementById('key-status-inline');
+  if (status) {
+    status.textContent = saved > 0 ? `${saved} clave(s) guardadas.` : 'No hay claves nuevas.';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }
+}
+
+// ── Quit ──
+function confirmQuit() {
+  if (confirm('¿Cerrar Robin completamente?')) {
+    closeSidePanel();
+    if (window.Robin && Robin.quit) Robin.quit();
+  }
+}
+</script>
+</body>
+</html>
